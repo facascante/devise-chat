@@ -11,4 +11,10 @@ pids
 logs
 results
 
+.DS_Store
+*/.DS_Store
+
+*.project
+*.settings
+node_modules
 npm-debug.log
