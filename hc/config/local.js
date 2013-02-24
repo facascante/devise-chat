@@ -11,6 +11,9 @@ var config = module.exports = {
 			      clientsecret : "0425c311c7896527fa7cab47731ee8c1",
 			      callback : "http://localhost/v1/authfb/callback"
 			    }
+		},
+		session : {
+		    secret : "chito pogi"
 		}
 };
 module.exports.local = function(req,res,next){

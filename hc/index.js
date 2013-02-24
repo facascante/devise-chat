@@ -30,9 +30,13 @@ app.configure(function(){
   app.use(express.methodOverride());
   app.use(express.cookieParser('your secret here'));
   app.use(express.session({
-	    key: "hatchcatch",
+	    key: "chito pogi",
 	    store: sessionStore
 	  }));
+  app.use(function(req,res,next){
+	  req.client = client;
+	  next();
+  });
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(app.router);
@@ -66,5 +70,7 @@ app.get('/:version/logout', function(req, res){
 	  req.logout();
 	  res.redirect('/:version/login');
 });
+
+
 
 
