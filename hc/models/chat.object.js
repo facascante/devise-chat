@@ -70,7 +70,7 @@ function decRoomOnlineCount(client,room){
 }
 
 function getVisitorStatus(client,visitor,fn){
-	client,get("hc:users:"+visitor+":status",function(err,replies){
+	client.get("hc:users:"+visitor+":status",function(err,replies){
 		fn(replies);
 	});
 }
@@ -89,11 +89,11 @@ function leaveVisitorNotification(io,room,visitor,provider){
     });
 }
 
-function MessageListener(socket,room,visitor,gender,provider){
+function MessageListener(io,socket,room,visitor,gender,provider){
 	socket.on('my msg', function(data) {
 	    var no_empty = data.msg.replace("\n","");
 	    if(no_empty.length > 0) {
-	      io.sockets.in(room_id).emit('new msg', {
+	      io.sockets.in(room).emit('new msg', {
 	        nickname: visitor,
 	        gender:gender,
 	        provider: provider,
@@ -136,14 +136,15 @@ function connectVisitor(client,io,room,visitor,provider,socket_id){
 exports.initializeChat = function(client,io){
 	
 	io.sockets.on('connection', function (socket) {
+		
 		var hs = socket.handshake,
 			visitor = hs.hatchcatch.user.codename,
-			gender = hs.hatchcatch.user.gender.
+			gender = hs.hatchcatch.user.gender,
 			provider = hs.hatchcatch.user.provider,
 			room = hs.hatchcatch.room;
 		socket.join(room);
 		connectVisitor(client,io,room,visitor,provider,socket.id);
-		MessageListener(socket,room,visitor,gender,provider);
+		MessageListener(io,socket,room,visitor,gender,provider);
 		socket.on('disconnect', function() {
 			disconnectVisitor(client,io,room,visitor,provider,socket.id);
 		});
