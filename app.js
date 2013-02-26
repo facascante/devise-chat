@@ -16,6 +16,8 @@ var server = express()
 	 console.log("----------------AS READY----------------");
 });
 
+chat_object.removeAllRecord(client);
+
 var io = sio.listen(server);
 io.set('authorization', function (hsData, accept) {
   if(hsData.headers.cookie) {

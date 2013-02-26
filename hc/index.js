@@ -9,6 +9,7 @@ var express = require('express')
   , path = require('path')
   , config = require('./config/local.js')
   , expressValidator = require('express-validator')
+  , chat_object = require('./models/chat.object.js')
   , RedisStore = require('connect-redis')(express);
 
 require('./config/strategy');
@@ -66,6 +67,9 @@ app.get('/:version/authtw/callback',
 );
 
 app.get('/:version/logout', function(req, res){
+	  chat_object.removeVisitor(client,req.user.room,req.user,function(reply){
+		  
+	  });
 	  req.logout();
 	  res.redirect('/v1/login');
 });

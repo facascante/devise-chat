@@ -1,11 +1,29 @@
 
+
 function getRooms(client,fn){
 	client.smembers("hc:partner:rooms", function(err, rooms) {
 		if (!err && rooms) fn(rooms);
 		else fn([]);
 	});
 }
+exports.removeAllRecord = function(client){
+	client.keys('hc:*', function(err, keys) {
+	    if(keys.length) client.del(keys);
+	    console.log('Deletion of all redis reference ', err || "Done!");
+	});
+}
 
+function removeRoom(client,room,fn){
+	client.srem('hc:partner:rooms', room,function(err,replies){
+		fn(replies);
+	});
+}
+
+function removeRoomVisitor(client,room,visitor,fn){
+	client.srem("hc:room:"+room+":visitor", visitor,function(err,replies){
+		fn(replies);
+	});
+}
 function getRoomVisitors(client,room,fn){
 	client.smembers("hc:room:"+room+":visitor", function(err, visitors) {
 		if (!err && visitors) fn(visitors);
@@ -156,7 +174,7 @@ exports.initializeChat = function(client,io){
 	io.sockets.on('connection', function (socket) {
 		
 		var hs = socket.handshake,
-			visitor = hs.hatchcatch.user.codename,
+			visitor = hs.hatchcatch.user.username,
 			gender = hs.hatchcatch.user.gender,
 			provider = hs.hatchcatch.user.provider,
 			room = hs.hatchcatch.room;
@@ -226,5 +244,13 @@ exports.accomodateVisitor  = function(client,visitor,fn){
 				}
 			});
 		}
+	});
+};
+
+exports.removeVisitor = function(client,room,visitor,fn){
+	removeRoom(client,room,function(reply){
+		removeRoomVisitor(client,room,visitor,function(reply){
+			fn(reply);
+		});
 	});
 };
