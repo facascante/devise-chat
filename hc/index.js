@@ -67,6 +67,6 @@ app.get('/:version/authtw/callback',
 
 app.get('/:version/logout', function(req, res){
 	  req.logout();
-	  res.redirect('/:version/login');
+	  res.redirect('/v1/login');
 });
 

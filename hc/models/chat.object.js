@@ -25,6 +25,24 @@ function setRoomVisitor(client,room,visitor,fn){
 	});
 }
 
+function checkVisitorifExist(client,visitor,fn){
+	getRooms(client,function(rooms){
+		var i=0;
+		rooms.forEach(function(room){
+			getRoomVisitors(client,room,function(visitors){
+				visitors.forEach(function(user){
+					if(JSON.parse(user).id == JSON.parse(visitor).id ){
+						fn(room); return;
+					}
+				});
+				i++;
+			});
+		});
+		if(i >= rooms.length){
+			fn(false); return;
+		}
+	});
+}
 function setVisitorSocket(client,room,visitor,socket_id,fn){
 	client.sadd("hc:sockets:"+visitor+":"+room,socket_id,function(err,replies){
 		fn(replies);
@@ -83,8 +101,8 @@ function newVisitorNotification(io,room,visitor,provider,status){
 }
 
 function leaveVisitorNotification(io,room,visitor,provider){
-	io.sockets.in(room_id).emit('user leave', {
-        nickname: nickname,
+	io.sockets.in(room).emit('user leave', {
+        nickname: visitor,
         provider: provider
     });
 }
@@ -110,7 +128,7 @@ function disconnectVisitor(client,io,room,visitor,provider,socket_id){
 			removeRoomOnlineList(client,room,visitor,function(reply){
 				if(reply){
 					decRoomOnlineCount(client,room);
-					leaveVisitorNotification(io,room,visitor,provider,status);
+					leaveVisitorNotification(io,room,visitor,provider);
 				}
 			});
 		};
@@ -151,47 +169,61 @@ exports.initializeChat = function(client,io){
 	});
 };
 
-
 exports.accomodateVisitor  = function(client,visitor,fn){
-	getRooms(client,function(rooms){
-		if(rooms.length){
-			rooms.forEach(function(room){
-				getRoomVisitors(client,room,function(visitors){
-					if(visitors.length == 0){
-						setRoomVisitor(client,room,visitor,function(replies){
-							fn( room ); return;
-						});
-					}
-					else if(visitors.length == 1){
-						if(JSON.parse(visitors[0]).gender != visitor.gender){
-							setRoomVisitor(client,room,visitor,function(replies){
-								fn( room ); return;
-							});
-						}
-					}
-					else{
-						
-					}
-				});
-			});
-			if(rooms.length == 15){
-				fn( false ); return;
-			}
-			else{
-				var room = "room-"+ (rooms.length + 1);
-				setRoom(client,room,function(replies){
-					setRoomVisitor(client,room,visitor,function(replies){
-						fn( room ); return;
-					});
-				});
-			}
+	
+	checkVisitorifExist(client,visitor,function(reply){
+		console.log("checkVisitorifExist :" + reply);
+		if(reply){
+			fn( reply ); return;
 		}
 		else{
-			var room = "room-1";
-			setRoom(client,room,function(replies){
-				setRoomVisitor(client,room,visitor,function(replies){
-					fn( room ); return;
-				});
+			getRooms(client,function(rooms){
+				console.log("getRooms :" + rooms);
+				if(rooms.length){
+					rooms.forEach(function(room){
+						getRoomVisitors(client,room,function(visitors){
+							console.log("getRoomVisitors :" + visitors);
+							if(visitors.length == 0){
+								setRoomVisitor(client,room,visitor,function(replies){
+									console.log("setRoomVisitor :" +room + replies);
+									fn( room ); return;
+								});
+							}
+							else if(visitors.length == 1){
+								if(JSON.parse(visitors[0]).gender != visitor.gender){
+									setRoomVisitor(client,room,visitor,function(replies){
+										console.log("setRoomVisitor :" +room + replies);
+										fn( room ); return;
+									});
+								}
+							}
+							else{
+								
+							}
+						});
+					});
+					if(rooms.length == 15){
+						fn( false ); return;
+					}
+					else{
+						var room = "room-"+ (rooms.length + 1);
+						setRoom(client,room,function(replies){
+							setRoomVisitor(client,room,visitor,function(replies){
+								console.log("setRoomVisitor :" +room + replies);
+								fn( room ); return;
+							});
+						});
+					}
+				}
+				else{
+					var room = "room-1";
+					setRoom(client,room,function(replies){
+						setRoomVisitor(client,room,visitor,function(replies){
+							console.log("setRoomVisitor :" +room + replies);
+							fn( room ); return;
+						});
+					});
+				}
 			});
 		}
 	});
