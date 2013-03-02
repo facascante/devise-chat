@@ -16,6 +16,10 @@ module.exports = {
 		chat : function(req,res){
 			var instance = version[req.params.version];
 			execute(instance, res, instance.page.chat(req, res));
+		},
+		start : function(req,res){
+			var instance = version[req.params.version];
+			execute(instance, res, instance.page.start(req, res));
 		}
 };
 

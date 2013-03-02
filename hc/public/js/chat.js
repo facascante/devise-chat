@@ -9,6 +9,10 @@ $(function() {
   socket.on('connect', function (){
     console.info('successfully established a working connection');
   });
+  
+  socket.on('participants complete', function (data){
+	    alert(JSON.stringify(data));
+  });
 
   socket.on('new msg', function(data) {
 	  var photo_url = "";

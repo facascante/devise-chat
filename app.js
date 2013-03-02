@@ -30,14 +30,16 @@ io.set('authorization', function (hsData, accept) {
 
       hsData.hatchcatch = {
         user: session.passport.user,
-        room: /\/(?:([^\/]+?))\/?$/g.exec(hsData.headers.referer)[1]
+        room: hsData.headers.cookie.split(" ")[1].split("=")[1]
       };
 
       return accept(null, true);
       
     });
-  } else {
-    return accept('No cookie transmitted.', false);
+  } 
+  else {
+	  return accept(null, true);
+   // return accept('No cookie transmitted.', false);
   }
 });
 
@@ -46,5 +48,5 @@ io.configure(function() {
   io.enable('browser client minification');
   io.enable('browser client gzip');
 });
-
-chat_object.initializeChat(client,io);
+var room = null;
+chat_object.initializeChat(client,io,room);

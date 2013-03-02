@@ -11,7 +11,7 @@ exports.removeAllRecord = function(client){
 	    if(keys.length) client.del(keys);
 	    console.log('Deletion of all redis reference ', err || "Done!");
 	});
-}
+};
 
 function removeRoom(client,room,fn){
 	client.srem('hc:partner:rooms', room,function(err,replies){
@@ -118,6 +118,7 @@ function newVisitorNotification(io,room,visitor,provider,status){
 	});
 }
 
+
 function leaveVisitorNotification(io,room,visitor,provider){
 	io.sockets.in(room).emit('user leave', {
         nickname: visitor,
@@ -136,6 +137,19 @@ function MessageListener(io,socket,room,visitor,gender,provider){
 	        msg: data.msg
 	      });
 	    }   
+	});
+}
+function beginGameListener(io,socket){
+	console.log("start game listener initialize");
+	socket.on('start game', function(data) {
+			data.chatmates.forEach(function(chatmate){
+				console.log("----------chito--------------");
+				console.log(chatmate);
+				io.sockets.in(chatmate.room).emit('participants complete', {
+			        user: data.user,
+			        chatmate: data.chatmates
+			    });
+			});
 	});
 }
 
@@ -165,28 +179,55 @@ function connectVisitor(client,io,room,visitor,provider,socket_id){
 					});
 				};
 			});
-		};
+		}
 	});
 };
 
-exports.initializeChat = function(client,io){
+exports.initializeChat = function(client,io,room){
 	
 	io.sockets.on('connection', function (socket) {
-		
-		var hs = socket.handshake,
+		if(socket.handshake.hatchcatch){
+			var hs = socket.handshake,
 			visitor = hs.hatchcatch.user.username,
 			gender = hs.hatchcatch.user.gender,
 			provider = hs.hatchcatch.user.provider,
-			room = hs.hatchcatch.room;
+			room = room || hs.hatchcatch.room;
 		socket.join(room);
 		connectVisitor(client,io,room,visitor,provider,socket.id);
 		MessageListener(io,socket,room,visitor,gender,provider);
+		beginGameListener(io,socket);
+		}
 		socket.on('disconnect', function() {
 			disconnectVisitor(client,io,room,visitor,provider,socket.id);
 		});
 	});
 };
 
+exports.getRoomVisitorsByGender = function(client,gender,fn){
+	getRooms(client,function(rooms){
+		var chatmate = new Array();
+		var ctr = 0;
+		rooms.forEach(function(room){
+			getRoomVisitors(client,room,function(visitors){
+				ctr++;
+				visitors.forEach(function(visitor){
+					if(JSON.parse(visitor).gender == gender){
+						chatmate.push({room:room,visitor:visitor});
+					}
+				});
+				
+				if(chatmate.length >= rooms.length){
+					fn(chatmate); return;
+				}
+				
+				if(ctr >= rooms.length){
+					fn(chatmate);
+				}
+				
+			});
+		});
+	});
+}
 exports.accomodateVisitor  = function(client,visitor,fn){
 	
 	checkVisitorifExist(client,visitor,function(reply){
@@ -203,14 +244,14 @@ exports.accomodateVisitor  = function(client,visitor,fn){
 							console.log("getRoomVisitors :" + visitors);
 							if(visitors.length == 0){
 								setRoomVisitor(client,room,visitor,function(replies){
-									console.log("setRoomVisitor :" +room + replies);
+									console.log("setRoomVisitor :" +room );
 									fn( room ); return;
 								});
 							}
 							else if(visitors.length == 1){
 								if(JSON.parse(visitors[0]).gender != visitor.gender){
 									setRoomVisitor(client,room,visitor,function(replies){
-										console.log("setRoomVisitor :" +room + replies);
+										console.log("setRoomVisitor :" +room );
 										fn( room ); return;
 									});
 								}
@@ -227,7 +268,7 @@ exports.accomodateVisitor  = function(client,visitor,fn){
 						var room = "room-"+ (rooms.length + 1);
 						setRoom(client,room,function(replies){
 							setRoomVisitor(client,room,visitor,function(replies){
-								console.log("setRoomVisitor :" +room + replies);
+								console.log("setRoomVisitor :" +room);
 								fn( room ); return;
 							});
 						});
@@ -237,7 +278,7 @@ exports.accomodateVisitor  = function(client,visitor,fn){
 					var room = "room-1";
 					setRoom(client,room,function(replies){
 						setRoomVisitor(client,room,visitor,function(replies){
-							console.log("setRoomVisitor :" +room + replies);
+							console.log("setRoomVisitor :" +room);
 							fn( room ); return;
 						});
 					});

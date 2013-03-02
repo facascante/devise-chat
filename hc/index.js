@@ -49,6 +49,7 @@ app.use(express.errorHandler({showStack: true, dumpExceptions: true}));
 });
 
 app.get('/:version/login',router.login);
+app.get('/:version/start',router.start);
 app.get('/:version/option',router.option);
 app.post('/:version/chat',router.chat);
 app.get('/:version/authfb', passport.authenticate('facebook'));
